@@ -1,0 +1,23 @@
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Maven / Spring Boot
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.log
+
+# Mac environment
+.DS_Store
+
+# Firmware secrets (as per your overview document)
+firmware/secrets.h
