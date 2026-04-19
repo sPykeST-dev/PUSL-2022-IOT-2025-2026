@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 
-import Dashboard from './pages/Dashboard'
 import Login from './pages/admin/Login'
 import AdminOverview from './pages/admin/AdminOverview'
 import LockerDetail from './pages/admin/LockerDetail'
@@ -12,8 +11,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/admin/login" />} />
 
         {/* Admin login — public */}
         <Route path="/admin/login" element={<Login />} />
