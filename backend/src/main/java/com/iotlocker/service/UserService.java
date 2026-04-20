@@ -1,5 +1,6 @@
 package com.iotlocker.service;
 
+import com.iotlocker.dto.StudentDTO;
 import com.iotlocker.dto.StudentRegistrationRequest;
 import com.iotlocker.model.RfidCard;
 import com.iotlocker.model.Student;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -21,16 +23,18 @@ public class UserService {
         this.rfidCardRepository = rfidCardRepository;
     }
 
-    public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+    public List<StudentDTO> getAllStudents() {
+        return studentRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public Student registerStudent(StudentRegistrationRequest request) {
+    public StudentDTO registerStudent(StudentRegistrationRequest request) {
         if (studentRepository.existsByStudentNumber(request.getStudentNumber())) {
             throw new IllegalArgumentException("Student number already exists.");
         }
-        if (rfidCardRepository.existsByUid(request.getCardUid())) {
+        if (rfidCardRepository.existsByUid(request.getRfidCardUid())) {
             throw new IllegalArgumentException("RFID Card UID already registered.");
         }
 
@@ -42,12 +46,18 @@ public class UserService {
         Student savedStudent = studentRepository.save(student);
 
         RfidCard rfidCard = new RfidCard();
-        rfidCard.setUid(request.getCardUid());
+        rfidCard.setUid(request.getRfidCardUid());
         rfidCard.setStudent(savedStudent);
-
         rfidCardRepository.save(rfidCard);
 
-        return savedStudent;
+        return new StudentDTO(
+                savedStudent.getId(),
+                savedStudent.getStudentNumber(),
+                savedStudent.getName(),
+                savedStudent.getEmail(),
+                rfidCard.getUid(),
+                savedStudent.getCreatedAt()
+        );
     }
 
     @Transactional
@@ -56,5 +66,20 @@ public class UserService {
             throw new IllegalArgumentException("Student not found.");
         }
         studentRepository.deleteById(studentId);
+    }
+
+    private StudentDTO toDTO(Student student) {
+        String cardUid = null;
+        if (student.getRfidCards() != null && !student.getRfidCards().isEmpty()) {
+            cardUid = student.getRfidCards().get(0).getUid();
+        }
+        return new StudentDTO(
+                student.getId(),
+                student.getStudentNumber(),
+                student.getName(),
+                student.getEmail(),
+                cardUid,
+                student.getCreatedAt()
+        );
     }
 }

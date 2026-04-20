@@ -9,5 +9,5 @@ public class StudentRegistrationRequest {
     private String studentNumber;
     private String name;
     private String email;
-    private String cardUid;
+    private String rfidCardUid;
 }
