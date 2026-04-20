@@ -1,10 +1,10 @@
-create database iot;
-use iot;
+CREATE DATABASE IF NOT EXISTS iot_locker;
+USE iot_locker;
 
 CREATE TABLE lockers (
     id VARCHAR(20) PRIMARY KEY,
     location VARCHAR(100),
-    status ENUM('UNOCCUPIED', 'OCCUPIED', 'MAINTENANCE'),
+    status ENUM('UNOCCUPIED', 'OCCUPIED', 'MAINTENANCE', 'OFFLINE'),
     current_card_uid VARCHAR(50),
     last_updated TIMESTAMP
 );
@@ -62,8 +62,9 @@ SELECT * FROM lockers;
 SELECT * FROM students;
 SELECT * FROM rfid_cards;
 
+-- password: 'password' — change after first login
 INSERT INTO admins (username, password_hash)
-VALUES ('admin', '$2a$10$examplehashedpassword1234567890');
+VALUES ('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LnYvS4Xyg8K');
 
 
 INSERT INTO pending_commands (locker_id, command, created_at)
@@ -72,3 +73,7 @@ VALUES ('LOCKER-01', 'MAINTENANCE_ON', NOW());
 
 INSERT INTO usage_logs (locker_id, card_uid, student_id, event, timestamp)
 VALUES ('LOCKER-01', 'A1:B2:C3:D4', 1, 'LOCKED', NOW());
+
+-- If re-running on an existing database, use these ALTER statements instead:
+-- ALTER TABLE lockers MODIFY COLUMN status ENUM('UNOCCUPIED','OCCUPIED','MAINTENANCE','OFFLINE');
+-- UPDATE admins SET password_hash='$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LnYvS4Xyg8K' WHERE username='admin';
