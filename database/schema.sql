@@ -64,7 +64,7 @@ SELECT * FROM rfid_cards;
 
 -- password: 'password' — change after first login
 INSERT INTO admins (username, password_hash)
-VALUES ('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LnYvS4Xyg8K');
+VALUES ('admin', '$2b$10$GPtu4MvUzXvovNa0T8U70ODG1iiHnZmWTCGHIHaHcBae7GQAagBmK');
 
 
 INSERT INTO pending_commands (locker_id, command, created_at)
