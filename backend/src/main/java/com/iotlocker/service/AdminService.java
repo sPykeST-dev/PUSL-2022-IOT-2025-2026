@@ -1,6 +1,7 @@
 package com.iotlocker.service;
 
 import com.iotlocker.dto.UsageLogDTO;
+import java.util.Optional;
 import com.iotlocker.model.Locker;
 import com.iotlocker.model.PendingCommand;
 import com.iotlocker.model.UsageLog;
@@ -24,15 +25,18 @@ public class AdminService {
     private final UsageLogRepository usageLogRepository;
     private final PendingCommandRepository pendingCommandRepository;
     private final StudentRepository studentRepository;
+    private final ScanService scanService;
 
     public AdminService(LockerRepository lockerRepository,
                         UsageLogRepository usageLogRepository,
                         PendingCommandRepository pendingCommandRepository,
-                        StudentRepository studentRepository) {
+                        StudentRepository studentRepository,
+                        ScanService scanService) {
         this.lockerRepository = lockerRepository;
         this.usageLogRepository = usageLogRepository;
         this.pendingCommandRepository = pendingCommandRepository;
         this.studentRepository = studentRepository;
+        this.scanService = scanService;
     }
 
     public List<UsageLogDTO> getLogsForLocker(String lockerId) {
@@ -92,6 +96,16 @@ public class AdminService {
         pendingCommandRepository.save(cmd);
         locker.setLastUpdated(new Timestamp(System.currentTimeMillis()));
         lockerRepository.save(locker);
+    }
+
+    public void requestScan(String lockerId) {
+        lockerRepository.findById(lockerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Locker not found: " + lockerId));
+        scanService.requestScan(lockerId);
+    }
+
+    public Optional<String> getScanResult(String lockerId) {
+        return scanService.consumeScanResult(lockerId);
     }
 
     private void logEvent(String lockerId, UsageLog.Event event, String cardUid, Long studentId) {

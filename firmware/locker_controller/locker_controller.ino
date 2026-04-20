@@ -74,8 +74,10 @@ LockerState lockerState = STATE_UNOCCUPIED;
 
 String  occupiedByUID  = "";   // UID string of the card that locked the locker
 bool    solenoidActive = false;
+bool    scanModeActive = false;
 unsigned long solenoidTimer    = 0;
 unsigned long lastCommandPoll  = 0;
+unsigned long scanModeTimer    = 0;
 
 // -------------------------------------------------------------
 //  OBJECTS
@@ -195,7 +197,12 @@ void pollCommand() {
     if (body.indexOf("\"hasCommand\":true") >= 0) {
       Serial.println("Command received from server: " + body);
 
-      if (body.indexOf("\"UNLOCK\"") >= 0) {
+      if (body.indexOf("\"SCAN\"") >= 0) {
+        Serial.println("Scan mode activated — waiting for card tap.");
+        scanModeActive = true;
+        scanModeTimer  = millis();
+        updateDisplay();
+      } else if (body.indexOf("\"UNLOCK\"") >= 0) {
         Serial.println("Remote UNLOCK command.");
         if (lockerState == STATE_OCCUPIED || lockerState == STATE_UNOCCUPIED) {
           unlockDoor();
@@ -245,6 +252,18 @@ void pollCommand() {
 void updateDisplay() {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
+
+  if (scanModeActive) {
+    display.setTextSize(2);
+    display.setCursor(0, 0);
+    display.println("SCAN");
+    display.println("MODE");
+    display.setTextSize(1);
+    display.setCursor(0, 48);
+    display.print("Tap card to register");
+    display.display();
+    return;
+  }
 
   switch (lockerState) {
 
@@ -376,6 +395,13 @@ void loop() {
     return;
   }
 
+  // ── Scan mode timeout (70 s) ───────────────────────────────
+  if (scanModeActive && millis() - scanModeTimer > 70000) {
+    scanModeActive = false;
+    Serial.println("Scan mode timed out.");
+    updateDisplay();
+  }
+
   // ── Poll for RFID card ──────────────────────────────────────
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) return;
 
@@ -384,6 +410,15 @@ void loop() {
   rfid.PCD_StopCrypto1();
 
   Serial.print("Card scanned: "); Serial.println(scannedUID);
+
+  // ── Scan mode: report UID without changing locker state ─────
+  if (scanModeActive) {
+    Serial.println("Scan mode: reporting UID to server.");
+    sendStatus("SCAN_RESULT", scannedUID);
+    scanModeActive = false;
+    updateDisplay();
+    return;
+  }
 
   // ── State transitions on card scan ──────────────────────────
   switch (lockerState) {

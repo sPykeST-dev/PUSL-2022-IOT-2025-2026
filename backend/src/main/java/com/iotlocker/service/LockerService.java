@@ -25,28 +25,52 @@ public class LockerService {
     private final UsageLogRepository usageLogRepository;
     private final PendingCommandRepository pendingCommandRepository;
     private final RfidCardRepository rfidCardRepository;
+    private final ScanService scanService;
 
     public LockerService(LockerRepository lockerRepository,
                          UsageLogRepository usageLogRepository,
                          PendingCommandRepository pendingCommandRepository,
-                         RfidCardRepository rfidCardRepository) {
+                         RfidCardRepository rfidCardRepository,
+                         ScanService scanService) {
         this.lockerRepository = lockerRepository;
         this.usageLogRepository = usageLogRepository;
         this.pendingCommandRepository = pendingCommandRepository;
         this.rfidCardRepository = rfidCardRepository;
+        this.scanService = scanService;
     }
 
     public List<Locker> getAllLockers() {
-        return lockerRepository.findAll();
+        List<Locker> lockers = lockerRepository.findAll();
+        Timestamp cutoff = new Timestamp(System.currentTimeMillis() - 30_000L);
+        for (Locker locker : lockers) {
+            if (locker.getStatus() != Locker.Status.MAINTENANCE
+                    && (locker.getLastUpdated() == null || locker.getLastUpdated().before(cutoff))) {
+                locker.setStatus(Locker.Status.OFFLINE);
+            }
+        }
+        return lockers;
     }
 
     public Locker getLockerById(String id) {
-        return lockerRepository.findById(id)
+        Locker locker = lockerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Locker not found: " + id));
+        Timestamp cutoff = new Timestamp(System.currentTimeMillis() - 30_000L);
+        if (locker.getStatus() != Locker.Status.MAINTENANCE
+                && (locker.getLastUpdated() == null || locker.getLastUpdated().before(cutoff))) {
+            locker.setStatus(Locker.Status.OFFLINE);
+        }
+        return locker;
     }
 
     @Transactional
     public void updateLockerStatus(String lockerId, LockerStatusRequest req) {
+        if ("SCAN_RESULT".equalsIgnoreCase(req.getStatus())) {
+            if (req.getCardUid() != null && !req.getCardUid().isEmpty()) {
+                scanService.storeScanResult(lockerId, req.getCardUid());
+            }
+            return;
+        }
+
         Locker locker = getLockerById(lockerId);
 
         Locker.Status newStatus = mapFirmwareStatus(req.getStatus());
@@ -72,8 +96,13 @@ public class LockerService {
     public CommandResponse pollCommand(String lockerId) {
         Optional<PendingCommand> cmd =
                 pendingCommandRepository.findFirstByLockerIdAndExecutedAtIsNullOrderByCreatedAtAsc(lockerId);
-        return cmd.map(c -> new CommandResponse(true, c.getCommand().name(), c.getId()))
-                  .orElse(new CommandResponse(false, null, null));
+        if (cmd.isPresent()) {
+            return new CommandResponse(true, cmd.get().getCommand().name(), cmd.get().getId());
+        }
+        if (scanService.hasPendingScan(lockerId)) {
+            return new CommandResponse(true, "SCAN", null);
+        }
+        return new CommandResponse(false, null, null);
     }
 
     @Transactional

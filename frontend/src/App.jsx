@@ -7,6 +7,7 @@ import AdminOverview from './pages/admin/AdminOverview'
 import LockerDetail from './pages/admin/LockerDetail'
 import StudentList from './pages/admin/StudentList'
 import RegisterStudent from './pages/admin/RegisterStudent'
+import Analytics from './pages/admin/Analytics'
 
 function App() {
   return (
@@ -48,6 +49,14 @@ function App() {
           element={
             <ProtectedRoute>
               <RegisterStudent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
             </ProtectedRoute>
           }
         />
