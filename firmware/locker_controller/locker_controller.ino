@@ -1,5 +1,3 @@
-const char* WIFI_SSID     = "your-network-name";
-const char* WIFI_PASSWORD = "your-password";
 // =============================================================
 //  SMART LOCKER CONTROLLER
 //  Board:   ESP32-C3 DevKitM-1
@@ -8,9 +6,13 @@ const char* WIFI_PASSWORD = "your-password";
 //  Lock:    Solenoid (via relay/transistor on SOLENOID_PIN)
 //  Door:    BU0032 Micro Limit Switch
 //
-//  STATUS OUTPUT: Serial Monitor (Arduino IDE)
-//  FUTURE:        Swap sendStatus() for WiFi/HTTP call
+//  Copy secrets.h.example → secrets.h and fill in credentials
+//  before uploading. secrets.h is excluded from version control.
 // =============================================================
+
+#include "secrets.h"
+#include <WiFi.h>
+#include <HTTPClient.h>
 
 #include <SPI.h>
 #include <Wire.h>
@@ -39,11 +41,12 @@ const char* WIFI_PASSWORD = "your-password";
 // -------------------------------------------------------------
 //  SETTINGS
 // -------------------------------------------------------------
-#define SOLENOID_UNLOCK_MS   3000   // How long to hold solenoid open (ms)
-#define OLED_WIDTH           128
-#define OLED_HEIGHT          64
-#define OLED_RESET           -1     // No reset pin
-#define OLED_I2C_ADDR        0x3C   // Most common; try 0x3D if blank
+#define SOLENOID_UNLOCK_MS       3000   // How long to hold solenoid open (ms)
+#define COMMAND_POLL_INTERVAL_MS 3000   // How often to poll server for commands
+#define OLED_WIDTH               128
+#define OLED_HEIGHT              64
+#define OLED_RESET               -1     // No reset pin
+#define OLED_I2C_ADDR            0x3C   // Most common; try 0x3D if blank
 
 // -- Whitelist toggle ------------------------------------------
 // Set to true and populate ALLOWED_IDs[] to restrict access.
@@ -64,14 +67,15 @@ enum LockerState {
   STATE_UNOCCUPIED,   // Locked, idle, waiting for any card
   STATE_DOOR_OPEN,    // Card scanned → solenoid fired → waiting for door close
   STATE_OCCUPIED,     // Door closed with belongings inside, only owner can exit
-  STATE_MAINTENANCE   // Out of service  (triggered via Serial command 'M')
+  STATE_MAINTENANCE   // Out of service
 };
 
 LockerState lockerState = STATE_UNOCCUPIED;
 
 String  occupiedByUID  = "";   // UID string of the card that locked the locker
 bool    solenoidActive = false;
-unsigned long solenoidTimer = 0;
+unsigned long solenoidTimer    = 0;
+unsigned long lastCommandPoll  = 0;
 
 // -------------------------------------------------------------
 //  OBJECTS
@@ -111,8 +115,8 @@ bool isAllowed(MFRC522::Uid &uid) {
 /** Fire the solenoid to pop the door open */
 void unlockDoor() {
   digitalWrite(SOLENOID_PIN, HIGH);
-  solenoidActive  = true;
-  solenoidTimer   = millis();
+  solenoidActive = true;
+  solenoidTimer  = millis();
 }
 
 /** De-energise the solenoid (lock engages mechanically on door close) */
@@ -127,29 +131,112 @@ bool isDoorClosed() {
 }
 
 // =============================================================
+//  WIFI
+// =============================================================
+void initWiFi() {
+  Serial.print("Connecting to WiFi: ");
+  Serial.println(WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  unsigned long wifiStart = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 15000) {
+    delay(500);
+    Serial.print(".");
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi connected. IP: " + WiFi.localIP().toString());
+  } else {
+    Serial.println("\nWiFi FAILED — running in offline mode.");
+  }
+}
+
+// =============================================================
 //  STATUS REPORTING
-//  All output goes through sendStatus() so you can later replace
-//  the Serial.println() calls with a WiFi/HTTP POST in one place.
+//  Sends locker state to backend and prints to Serial Monitor.
 // =============================================================
 void sendStatus(String status, String cardUID) {
-  // ── Serial output (Arduino IDE Serial Monitor) ──
   Serial.println("----------------------------------------");
   Serial.print  ("STATUS : "); Serial.println(status);
   Serial.print  ("CARD   : "); Serial.println(cardUID.length() ? cardUID : "NONE");
   Serial.println("----------------------------------------");
 
-  // ── TODO: Future web integration ─────────────────────────────
-  // Replace the block below with your HTTP POST / MQTT publish.
-  // Example (uncomment and configure WiFi credentials first):
-  //
-  //   if (WiFi.status() == WL_CONNECTED) {
-  //     HTTPClient http;
-  //     http.begin("http://your-server/api/locker");
-  //     http.addHeader("Content-Type", "application/json");
-  //     String payload = "{\"status\":\"" + status + "\",\"card\":\"" + cardUID + "\"}";
-  //     http.POST(payload);
-  //     http.end();
-  //   }
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  String url = String(SERVER_URL) + "/api/locker/" + String(LOCKER_ID) + "/status";
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json");
+
+  String payload = "{\"status\":\"" + status + "\",\"cardUid\":\""
+                   + (cardUID.length() ? cardUID : "") + "\"}";
+  int httpCode = http.POST(payload);
+  if (httpCode > 0) {
+    Serial.print("HTTP POST status: "); Serial.println(httpCode);
+  } else {
+    Serial.print("HTTP POST error: "); Serial.println(http.errorToString(httpCode));
+  }
+  http.end();
+}
+
+// =============================================================
+//  COMMAND POLLING
+//  Checks server for pending admin commands every 3 seconds.
+// =============================================================
+void pollCommand() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  String url = String(SERVER_URL) + "/api/locker/" + String(LOCKER_ID) + "/command";
+  http.begin(url);
+  int httpCode = http.GET();
+
+  if (httpCode == 200) {
+    String body = http.getString();
+
+    if (body.indexOf("\"hasCommand\":true") >= 0) {
+      Serial.println("Command received from server: " + body);
+
+      if (body.indexOf("\"UNLOCK\"") >= 0) {
+        Serial.println("Remote UNLOCK command.");
+        if (lockerState == STATE_OCCUPIED || lockerState == STATE_UNOCCUPIED) {
+          unlockDoor();
+          lockerState = STATE_DOOR_OPEN;
+          updateDisplay();
+          sendStatus("DOOR_OPEN", occupiedByUID);
+        }
+      } else if (body.indexOf("\"MAINTENANCE_ON\"") >= 0) {
+        Serial.println("Remote MAINTENANCE_ON command.");
+        lockerState   = STATE_MAINTENANCE;
+        occupiedByUID = "";
+        lockDoor();
+        updateDisplay();
+        sendStatus("MAINTENANCE", "");
+      } else if (body.indexOf("\"MAINTENANCE_OFF\"") >= 0) {
+        Serial.println("Remote MAINTENANCE_OFF command.");
+        if (lockerState == STATE_MAINTENANCE) {
+          lockerState = STATE_UNOCCUPIED;
+          updateDisplay();
+          sendStatus("UNOCCUPIED", "");
+        }
+      }
+
+      // Acknowledge command so it is not returned again
+      int idIdx = body.indexOf("\"commandId\":");
+      if (idIdx >= 0) {
+        String idStr = body.substring(idIdx + 12);
+        long cmdId = idStr.toInt();
+        if (cmdId > 0) {
+          HTTPClient ackHttp;
+          String ackUrl = String(SERVER_URL) + "/api/locker/" + String(LOCKER_ID)
+                          + "/command/" + String(cmdId) + "/executed";
+          ackHttp.begin(ackUrl);
+          ackHttp.addHeader("Content-Type", "application/json");
+          ackHttp.POST("");
+          ackHttp.end();
+        }
+      }
+    }
+  }
+  http.end();
 }
 
 // =============================================================
@@ -235,6 +322,9 @@ void setup() {
     Serial.println("OLED ready.");
   }
 
+  // WiFi
+  initWiFi();
+
   updateDisplay();
   sendStatus("UNOCCUPIED", "");
   Serial.println("Type 'M' + Enter in Serial Monitor to toggle maintenance mode.");
@@ -244,6 +334,12 @@ void setup() {
 //  MAIN LOOP
 // =============================================================
 void loop() {
+
+  // ── Poll server for admin commands every 3 s ────────────────
+  if (millis() - lastCommandPoll >= COMMAND_POLL_INTERVAL_MS) {
+    lastCommandPoll = millis();
+    pollCommand();
+  }
 
   // ── Serial command: toggle maintenance ──────────────────────
   if (Serial.available()) {
