@@ -1,7 +1,7 @@
 package com.iotlocker.controller;
 
+import com.iotlocker.dto.StudentDTO;
 import com.iotlocker.dto.StudentRegistrationRequest;
-import com.iotlocker.model.Student;
 import com.iotlocker.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,15 +19,15 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Student>> getAllStudents() {
+    public ResponseEntity<List<StudentDTO>> getAllStudents() {
         return ResponseEntity.ok(userService.getAllStudents());
     }
 
     @PostMapping
     public ResponseEntity<?> registerStudent(@RequestBody StudentRegistrationRequest request) {
         try {
-            Student registeredStudent = userService.registerStudent(request);
-            return ResponseEntity.ok(registeredStudent);
+            StudentDTO registered = userService.registerStudent(request);
+            return ResponseEntity.ok(registered);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
