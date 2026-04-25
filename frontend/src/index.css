@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+@keyframes ripple-btn {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
