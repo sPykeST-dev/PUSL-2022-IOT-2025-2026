@@ -108,68 +108,75 @@ function Login() {
       </div>
 
       {/* ── Right panel ── */}
-      <div className="flex-1 flex items-center justify-center px-8">
+      <div className="flex-1 flex items-center justify-center px-8" style={{ background: '#f1f5f9' }}>
         <div className="w-full max-w-sm">
-          <div className="mb-4 inline-flex items-center gap-2 px-4 py-3 rounded-tl-lg" style={{ background: '#1e1b4b' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            <span className="text-white text-sm font-semibold tracking-tight">Smart Locker</span>
-          </div>
 
           {/* Form card */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 relative">
-            {/* corner accents */}
-            <span style={{
-              position: 'absolute', top: 10, left: 10, width: 18, height: 18,
-              borderTop: '2.5px solid #6366f1', borderLeft: '2.5px solid #6366f1',
-              borderRadius: '4px 0 0 0'
-            }} />
-            <span style={{
-              position: 'absolute', bottom: 10, right: 10, width: 18, height: 18,
-              borderBottom: '2.5px solid #6366f1', borderRight: '2.5px solid #6366f1',
-              borderRadius: '0 0 4px 0'
-            }} />
+          <div className="rounded-2xl p-8" style={{ background: '#fff', border: '1px solid #e8edf3' }}>
 
-            <h2 className="text-2xl font-bold text-slate-800 mb-1">Welcome back</h2>
-            <p className="text-sm text-slate-400 mb-8">Sign in to your admin account</p>
+            {/* Icon */}
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl mb-5" style={{ background: '#eef2ff' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+
+            <h2 className="text-2xl font-bold mb-1" style={{ color: '#0f172a' }}>Welcome back</h2>
+            <p className="text-sm mb-7" style={{ color: '#94a3b8' }}>Sign in to your admin account</p>
 
             {error && (
-              <div className="mb-5 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+              <div className="mb-5 text-sm rounded-xl px-4 py-3" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
                 {error}
               </div>
             )}
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 mb-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Username</label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="inline-block w-0.5 h-3.5 rounded-sm" style={{ background: '#4f46e5' }} />
+                  <label className="text-sm font-bold" style={{ color: '#1e1b4b' }}>Username</label>
+                </div>
                 <input
                   type="text"
                   placeholder="Enter your username"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                  className="w-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '50px',
+                    color: '#0f172a',
+                  }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Password</label>
-
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="inline-block w-0.5 h-3.5 rounded-sm" style={{ background: '#4f46e5' }} />
+                  <label className="text-sm font-bold" style={{ color: '#1e1b4b' }}>Password</label>
+                </div>
                 <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 pr-12 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                    className="w-full px-5 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '50px',
+                      color: '#0f172a',
+                    }}
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-semibold transition-colors hover:text-slate-600"
+                    style={{ color: '#94a3b8' }}
                   >
                     {showPassword ? 'Hide' : 'Show'}
                   </button>
@@ -180,21 +187,29 @@ function Login() {
             <button
               onClick={handleLogin}
               disabled={loading}
-              style={{ background: loading ? '#a5b4fc' : '#1e1b4b' }}
-              className="mt-6 w-full text-white text-sm font-semibold rounded-xl py-3 transition-all hover:opacity-90 disabled:cursor-not-allowed"
+              className="w-full text-white text-sm font-semibold py-3 transition-all hover:opacity-90 disabled:cursor-not-allowed"
+              style={{
+                background: loading ? '#a5b4fc' : '#1e1b4b',
+                borderRadius: '50px',
+                letterSpacing: '0.02em',
+                border: 'none',
+              }}
             >
               {loading ? 'Signing in…' : 'Sign in →'}
             </button>
           </div>
+
           <Link
             to="/"
-            className="mt-5 flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            className="mt-5 flex items-center justify-center gap-2 text-sm font-medium transition-colors hover:text-slate-600"
+            style={{ color: '#94a3b8' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
             Back to Dashboard
           </Link>
+
         </div>
       </div>
     </div>
