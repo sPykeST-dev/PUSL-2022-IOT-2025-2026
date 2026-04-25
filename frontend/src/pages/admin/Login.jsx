@@ -201,7 +201,7 @@ function Login() {
 
           <Link
             to="/"
-            className="mt-5 flex items-center justify-center gap-2 text-sm font:medium transition-colors hover:text-slate-600"
+            className="mt-5 flex items-center justify-center gap-2 text-sm font-medium transition-colors hover:text-slate-600"
             style={{ color: '#94a3b8' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
