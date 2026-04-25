@@ -3,16 +3,17 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/api'
 
 const LOCKER_PILLS = [
-  { label: 'LOCKER-01', status: 'Available',   dot: '#4ade80' },
-  { label: 'LOCKER-02', status: 'Occupied',    dot: '#f87171' },
+  { label: 'LOCKER-01', status: 'Available', dot: '#4ade80' },
+  { label: 'LOCKER-02', status: 'Occupied', dot: '#f87171' },
   { label: 'LOCKER-03', status: 'Maintenance', dot: '#fbbf24' },
 ]
 
 function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error,    setError]    = useState('')
-  const [loading,  setLoading]  = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   const handleLogin = async () => {
@@ -38,12 +39,16 @@ function Login() {
         style={{ background: '#1e1b4b' }}
       >
         {/* corner accents */}
-        <span style={{ position:'absolute', top:16, left:16, width:20, height:20,
-          borderTop:'2.5px solid rgba(99,102,241,0.5)', borderLeft:'2.5px solid rgba(99,102,241,0.5)',
-          borderRadius:'4px 0 0 0' }} />
-        <span style={{ position:'absolute', bottom:16, right:16, width:20, height:20,
-          borderBottom:'2.5px solid rgba(99,102,241,0.5)', borderRight:'2.5px solid rgba(99,102,241,0.5)',
-          borderRadius:'0 0 4px 0' }} />
+        <span style={{
+          position: 'absolute', top: 16, left: 16, width: 20, height: 20,
+          borderTop: '2.5px solid rgba(99,102,241,0.5)', borderLeft: '2.5px solid rgba(99,102,241,0.5)',
+          borderRadius: '4px 0 0 0'
+        }} />
+        <span style={{
+          position: 'absolute', bottom: 16, right: 16, width: 20, height: 20,
+          borderBottom: '2.5px solid rgba(99,102,241,0.5)', borderRight: '2.5px solid rgba(99,102,241,0.5)',
+          borderRadius: '0 0 4px 0'
+        }} />
 
         {/* Branding */}
         <div className="flex items-center gap-2">
@@ -76,7 +81,7 @@ function Login() {
             >
               {/* Vent slots */}
               <div className="flex flex-col gap-0.5 mb-2">
-                {[0,1,2].map(i => (
+                {[0, 1, 2].map(i => (
                   <div key={i} className="w-full rounded-full" style={{ height: 2, background: 'rgba(255,255,255,0.08)' }} />
                 ))}
               </div>
@@ -116,12 +121,16 @@ function Login() {
           {/* Form card */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 relative">
             {/* corner accents */}
-            <span style={{ position:'absolute', top:10, left:10, width:18, height:18,
-              borderTop:'2.5px solid #6366f1', borderLeft:'2.5px solid #6366f1',
-              borderRadius:'4px 0 0 0' }} />
-            <span style={{ position:'absolute', bottom:10, right:10, width:18, height:18,
-              borderBottom:'2.5px solid #6366f1', borderRight:'2.5px solid #6366f1',
-              borderRadius:'0 0 4px 0' }} />
+            <span style={{
+              position: 'absolute', top: 10, left: 10, width: 18, height: 18,
+              borderTop: '2.5px solid #6366f1', borderLeft: '2.5px solid #6366f1',
+              borderRadius: '4px 0 0 0'
+            }} />
+            <span style={{
+              position: 'absolute', bottom: 10, right: 10, width: 18, height: 18,
+              borderBottom: '2.5px solid #6366f1', borderRight: '2.5px solid #6366f1',
+              borderRadius: '0 0 4px 0'
+            }} />
 
             <h2 className="text-2xl font-bold text-slate-800 mb-1">Welcome back</h2>
             <p className="text-sm text-slate-400 mb-8">Sign in to your admin account</p>
@@ -146,14 +155,25 @@ function Login() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Password</label>
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-                />
+
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 pr-12 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
             </div>
 
