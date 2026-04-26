@@ -20,4 +20,4 @@ backend/target/
 .DS_Store
 
 # Firmware secrets (as per your overview document)
-firmware/secrets.h
+firmware/locker_controller/secrets.h
