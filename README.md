@@ -125,7 +125,7 @@ Open `locker_controller.ino` in Arduino IDE with the following board settings:
 | OLED SDA | GPIO 8 |
 | OLED SCL | GPIO 9 |
 | Solenoid (IRF520 SIG) | GPIO 10 |
-| Door switch (NC) | GPIO 2 |
+| Door switch (NO) | GPIO 2 |
 
 ---
 
@@ -209,9 +209,3 @@ The ESP32 and the machine running the backend must be on the same network.
 2. Find your laptop's IP on that network (`ifconfig` on Mac/Linux, `ipconfig` on Windows)
 3. Set `SERVER_URL` in `secrets.h` to `http://<your-ip>:8080`
 
----
-
-## Module
-
-PUSL-2022 Internet of Things — NSBM Green University (2025/2026)
-Lecturer: Isuru Sri Bandara
