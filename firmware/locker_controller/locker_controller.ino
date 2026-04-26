@@ -37,7 +37,7 @@
 // -------------------------------------------------------------
 //  SETTINGS
 // -------------------------------------------------------------
-#define SOLENOID_UNLOCK_MS          3000    // max solenoid energise time
+#define SOLENOID_UNLOCK_MS          10000   // max solenoid energise time
 #define COMMAND_POLL_INTERVAL_MS    3000    // server poll cadence
 #define HEARTBEAT_INTERVAL_MS      20000   // POST status to prevent backend OFFLINE (threshold 30 s)
 #define WIFI_RECONNECT_INTERVAL_MS 30000   // retry WiFi if lost
